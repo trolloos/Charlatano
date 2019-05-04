@@ -18,10 +18,9 @@
 
 package com.charlatano.game
 
+import com.badlogic.gdx.math.Vector2
 import com.charlatano.game.CSGO.csgoEXE
-import com.charlatano.game.entity.Player
-import com.charlatano.game.entity.position
-import com.charlatano.game.entity.punch
+import com.charlatano.game.entity.*
 import com.charlatano.game.netvars.NetVarOffsets.vecViewOffset
 import com.charlatano.utils.Angle
 import com.charlatano.utils.Vector
@@ -31,7 +30,12 @@ import java.lang.Math.toDegrees
 
 private val angles: ThreadLocal<Angle> = ThreadLocal.withInitial { Vector() }
 
+private val lastPunch = Vector2()
+
 fun calculateAngle(player: Player, dst: Vector): Angle = angles.get().apply {
+	val weaponEntity = me.weaponEntity()
+	val shotsFired = me.shotsFired()
+	val forceSet = shotsFired == 0 && !lastPunch.isZero
 	val myPunch = player.punch()
 	val myPosition = player.position()
 	
@@ -41,8 +45,14 @@ fun calculateAngle(player: Player, dst: Vector): Angle = angles.get().apply {
 	
 	val hyp = Math.sqrt((dX * dX) + (dY * dY))
 	
-	x = toDegrees(atan(dZ / hyp)) - myPunch.x * 2.0
-	y = toDegrees(atan(dY / dX)) - myPunch.y * 2.0
+	if (forceSet || shotsFired > 0 || weaponEntity.bullets() < 1) {
+		x = toDegrees(atan(dZ / hyp)) - myPunch.x * 2.0
+		y = toDegrees(atan(dY / dX)) - myPunch.y * 2.0
+	} else {
+		x = toDegrees(atan(dZ / hyp)) 
+		y = toDegrees(atan(dY / dX)) 
+	}
+	
 	z = 0.0
 	if (dX >= 0.0) y += 180
 	
