@@ -41,6 +41,30 @@ var BOX_ESP = false
  */
 var GLOW_ESP = true
 
+var RADAR = true
+/**
+ * This gets rid of glow ESP "flicker", and more importantly reduces CPU usage.
+ */
+var FLICKER_FREE_GLOW = true
+
+/**
+ * Whether or not to use model ESP.
+ * This esp makes the model itself glow a certain color.
+ * This esp is currently tied to GLOW_ESP, and GLOW_ESP must be true
+ * This esp does not show enemies through walls, it only highlights and makes them extremely visible when on screen
+ */
+var MODEL_ESP = true
+
+/**
+ * Whether or not to change model colors
+ */
+var CHAMS = false
+
+/**
+ * Brightness of CHAMS
+ */
+var CHAMS_BRIGHTNESS = 100
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////// --- TOGGLES --- ////////////////////////////////////////
@@ -87,12 +111,12 @@ var SHOW_GRENADES = false
 /**
  * The color to highlight your team mates.
  */
-var TEAM_COLOR = Color(0, 0, 255)
+var TEAM_COLOR = Color(0, 0, 255, 1.0)
 
 /**
  * The color to highlight your enemies.
  */
-var ENEMY_COLOR = Color(255, 0, 0)
+var ENEMY_COLOR = Color(255, 0, 0, 1.0)
 
 /**
  * The color to highlight the bomb.
@@ -108,15 +132,3 @@ var WEAPON_COLOR = Color(0, 255, 0, 0.5)
  * The color to highlight grenades.
  */
 var GRENADE_COLOR = Color(0, 255, 0, 1.0)
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////// --- MISCELLANEOUS --- ////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////
-
-/**
- * Paints the models with their respective colors.
- *
- * WARNING: This may cause random game crashes if you enable it.
- */
-var COLOR_MODELS = false

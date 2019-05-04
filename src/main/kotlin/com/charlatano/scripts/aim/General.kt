@@ -20,7 +20,7 @@ package com.charlatano.scripts.aim
 
 import com.charlatano.game.*
 import com.charlatano.game.entity.*
-import com.charlatano.game.offsets.ScaleFormOffsets
+import com.charlatano.game.entity.EntityType.Companion.ccsPlayer
 import com.charlatano.settings.*
 import com.charlatano.utils.*
 import org.jire.arrowhead.keyPressed
@@ -39,31 +39,36 @@ internal fun reset() {
 }
 
 internal fun findTarget(position: Angle, angle: Angle, allowPerfect: Boolean,
-                        lockFOV: Int = AIM_FOV, boneID: Int = HEAD_BONE): Player {
-	var closestDelta = Double.MAX_VALUE
-	var closestPlayer: Player = -1L
-	
+                        lockFOV: Int = AIM_FOV, boneID: Int = HEAD_BONE,
+                        yawOnly: Boolean): Player {
 	var closestFOV = Double.MAX_VALUE
+	var closestDelta = Double.MAX_VALUE
+	var closestPlayer = -1L
 	
-	forEntities(EntityType.CCSPlayer) {
+	forEntities(ccsPlayer) result@{
 		val entity = it.entity
-		if (entity <= 0) return@forEntities
-		if (!entity.canShoot()) return@forEntities
+		if (entity <= 0 || entity == me || !entity.canShoot()) {
+			return@result false
+		}
 		
-		val ePos: Angle = Vector(entity.bone(0xC, boneID), entity.bone(0x1C, boneID), entity.bone(0x2C, boneID))
+		val ePos: Angle = entity.bones(boneID)
 		val distance = position.distanceTo(ePos)
 		
 		val dest = calculateAngle(me, ePos)
 		
 		val pitchDiff = Math.abs(angle.x - dest.x)
 		val yawDiff = Math.abs(angle.y - dest.y)
-		val delta = Math.abs(Math.sin(Math.toRadians(yawDiff)) * distance)
-		val fovDelta = Math.abs((Math.sin(Math.toRadians(pitchDiff)) + Math.sin(Math.toRadians(yawDiff))) * distance)
+		val fov = Math.abs(Math.sin(Math.toRadians(yawDiff)) * distance)
+		val delta = Math.abs((Math.sin(Math.toRadians(pitchDiff)) + Math.sin(Math.toRadians(yawDiff))) * distance)
 		
-		if (fovDelta <= lockFOV && delta < closestDelta) {
+		if (if (yawOnly) fov <= lockFOV && delta < closestDelta else delta <= lockFOV && delta <= closestDelta) {
+			closestFOV = fov
 			closestDelta = delta
 			closestPlayer = entity
-			closestFOV = fovDelta
+			
+			return@result true
+		} else {
+			return@result false
 		}
 	}
 	
@@ -75,58 +80,62 @@ internal fun findTarget(position: Angle, angle: Angle, allowPerfect: Boolean,
 	return closestPlayer
 }
 
-internal fun Entity.canShoot()
-		= spotted()
+internal fun Entity.inMyTeam() =
+		!TEAMMATES_ARE_ENEMIES && if (DANGER_ZONE) {
+			me.survivalTeam().let { it > -1 && it == this.survivalTeam() }
+		} else me.team() == team()
+
+internal fun Entity.canShoot() = spotted()
 		&& !dormant()
 		&& !dead()
-		&& me.team() != team()
+		&& !inMyTeam()
 		&& !me.dead()
 
 internal inline fun <R> aimScript(duration: Int, crossinline precheck: () -> Boolean,
                                   crossinline doAim: (destinationAngle: Angle,
-                                                      currentAngle: Angle, aimSpeed: Int) -> R)
-		= every(duration) {
+                                                      currentAngle: Angle, aimSpeed: Int) -> R) = every(duration) {
 	if (!precheck()) return@every
+	if (!me.weaponEntity().canFire()) {
+		reset()
+		return@every
+	}
 	
 	val aim = ACTIVATE_FROM_FIRE_KEY && keyPressed(FIRE_KEY)
 	val forceAim = keyPressed(FORCE_AIM_KEY)
 	val pressed = aim or forceAim
 	var currentTarget = target.get()
 	
-	if (!pressed || CSGO.scaleFormDLL.boolean(ScaleFormOffsets.bCursorEnabled)) {
+	if (!pressed) {
 		reset()
 		return@every
 	}
 	
-	if (!CLASSIC_OFFENSIVE) {
-		val weapon = me.weapon()
-		if (!weapon.pistol && !weapon.automatic && !weapon.shotgun && !weapon.sniper) {
-			reset()
-			return@every
-		}
+	val weapon = me.weapon()
+	if (!weapon.pistol && !weapon.automatic && !weapon.shotgun && !weapon.sniper) {
+		reset()
+		return@every
 	}
 	
 	val currentAngle = clientState.angle()
 	
 	val position = me.position()
 	if (currentTarget < 0) {
-		currentTarget = findTarget(position, currentAngle, aim)
+		currentTarget = findTarget(position, currentAngle, aim, yawOnly = true)
 		if (currentTarget < 0) {
-			Thread.sleep(200 + randLong(350))
 			return@every
 		}
 		target.set(currentTarget)
 	}
 	
-	if (!currentTarget.canShoot()) {
+	if (currentTarget == me || !currentTarget.canShoot()) {
 		reset()
-		Thread.sleep(200 + randLong(350))
+		
+		if (TARGET_SWAP_MAX_DELAY > 0) {
+			Thread.sleep(randLong(TARGET_SWAP_MIN_DELAY, TARGET_SWAP_MAX_DELAY))
+		}
 	} else if (currentTarget.onGround() && me.onGround()) {
 		val boneID = bone.get()
-		val bonePosition = Vector(
-				currentTarget.bone(0xC, boneID),
-				currentTarget.bone(0x1C, boneID),
-				currentTarget.bone(0x2C, boneID))
+		val bonePosition = currentTarget.bones(boneID)
 		
 		val destinationAngle = calculateAngle(me, bonePosition)
 		if (AIM_ASSIST_MODE) destinationAngle.finalize(currentAngle, AIM_ASSIST_STRICTNESS / 100.0)

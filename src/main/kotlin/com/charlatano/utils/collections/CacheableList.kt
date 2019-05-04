@@ -33,7 +33,6 @@ class CacheableList<out E>(val capacity: Int, val minIndex: Int = 0) {
 	
 	fun add(element: @UnsafeVariance E): Int {
 		if (nextIndex >= capacity) {
-			println("Overflow $nextIndex, $capacity")
 			Thread.dumpStack()
 			System.exit(5)
 			return -1
@@ -45,18 +44,22 @@ class CacheableList<out E>(val capacity: Int, val minIndex: Int = 0) {
 	
 	operator fun contains(element: @UnsafeVariance E): Boolean {
 		for (e in iterator()) {
-			if (element == e) {
+			if (element === e) {
 				return true
 			}
 		}
 		return false
 	}
 	
-	inline fun forEach(action: (E) -> Unit): Unit {
+	inline fun forEach(crossinline action: (E) -> Boolean): Boolean {
 		for (e in iterator()) {
-			if (e != null)
-				action(e)
+			if (e !== null) {
+				if (action(e)) {
+					return true
+				}
+			}
 		}
+		return false
 	}
 	
 	fun clear() {
@@ -81,7 +84,7 @@ class CacheableList<out E>(val capacity: Int, val minIndex: Int = 0) {
 		
 		override fun next(): E {
 			val o = arr[pointer++]
-			if (o == null && hasNext()) {
+			if (o === null && hasNext()) {
 				return next()
 			}
 			return o as E

@@ -24,6 +24,9 @@ import com.charlatano.game.CSGO.gameHeight
 import com.charlatano.game.CSGO.gameWidth
 import com.charlatano.game.CSGO.gameX
 import com.charlatano.game.CSGO.gameY
+import com.charlatano.overlay.transparency.TransparencyApplier
+import com.charlatano.overlay.transparency.win10.Win10TransparencyApplier
+import com.charlatano.overlay.transparency.win7.Win7TransparencyApplier
 import com.charlatano.settings.OPENGL_FPS
 import com.charlatano.settings.OPENGL_MSAA_SAMPLES
 import com.charlatano.settings.OPENGL_VSYNC
@@ -33,7 +36,9 @@ import com.sun.jna.platform.win32.WinDef
 
 object Overlay {
 	
-	var hwnd: WinDef.HWND? = null
+	@Volatile var opened = false
+	
+	lateinit var hwnd: WinDef.HWND
 	
 	fun open() = LwjglApplicationConfiguration().apply {
 		width = gameWidth
@@ -53,10 +58,27 @@ object Overlay {
 		LwjglApplication(CharlatanoOverlay, this)
 		
 		do {
-			hwnd = User32.INSTANCE.FindWindow(null, title)
-			Thread.sleep(512)
-		} while (hwnd == null)
-		WindowTools.transparentWindow(hwnd!!)
+			val hwnd = User32.INSTANCE.FindWindow(null, title)
+			if (hwnd != null) {
+				Overlay.hwnd = hwnd
+				break
+			}
+			Thread.sleep(64) // decreased so it won't go black as long
+		} while (!Thread.interrupted())
+		
+		// sets up window to be fullscreen, click-through, etc.
+		WindowCorrector.setupWindow(hwnd)
+		
+		
+		// sets up the full transparency of the Window (only Windows 7 and 10 can do this)
+		val transparencyApplier: TransparencyApplier =
+				if (System.getProperty("os.name").contains("windows 10", ignoreCase = true))
+					Win10TransparencyApplier
+				else
+					Win7TransparencyApplier // will only work on Windows 7 or early Windows 10 builds
+		transparencyApplier.applyTransparency(hwnd)
+		
+		opened = true
 	}
 	
 	init {

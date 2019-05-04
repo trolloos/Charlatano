@@ -1,8 +1,13 @@
+## Want to chat? Join our Discord
+**Join our Discord:** https://discord.gg/5q5h4ZE
+
 # Charlatano
 _Cheating is but a lifestyle_
 
 [![Build Status](https://travis-ci.org/Jire/Charlatano.svg?branch=master)](https://travis-ci.org/Jire/Charlatano)
 [![License](https://img.shields.io/github/license/Jire/Charlatano.svg)](https://github.com/Jire/Charlatano/blob/master/LICENSE.txt)
+
+---
 
 **From the creators of Abendigo** comes a brand new approach to cheating-- _Charlatano_ can be completely
 __stream-proof__, hiding the fact that you're cheating while streaming, and completely bypasses SMAC server-sided
@@ -14,6 +19,7 @@ free and open-source cheating software!
 ---
 
 **Available Features**
+* Works on Danger Zone (battle royale)
 * Always-on all-weapon smooth dynamic recoil control system
 * Aim bot with humanized aim paths
 * Low-FOV "perfect aim" (non-silent)
@@ -29,7 +35,10 @@ free and open-source cheating software!
 
 **Beginner's Guide**
 
-Before doing anything, make sure you have Java Development Kit (JDK) 8 or later installed.
+Before doing anything, make sure you have
+[Java Development Kit (JDK) 8](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html)
+or later installed. This is NOT the same thing as the regular Java Runtime (JRE), and you MUST install the JDK
+in order to build Charlatano, as well as any other Java software.
 
 The first step is to compile the source code into a usable cheat program.
 
@@ -41,10 +50,10 @@ The first step is to compile the source code into a usable cheat program.
 * Double click on the "_build_" (_build.bat_) script and wait for it to complete
 
 Once those steps are complete, the usable cheat program can be found within the _build_
-directory, and will in a directory called **Charlatano 1.0.3**.
+directory, and will in a directory called **Charlatano 1.0.10**.
 
-From within the **Charlatano 1.0.3** directory, you can start the cheat by running
-the _"Start Charlatano 1.0.3"_ script.
+From within the **Charlatano 1.0.10** directory, you can start the cheat by running
+the _"Start Charlatano 1.0.10"_ script.
 
 Before starting the cheat, you should already be spawned in a game with a weapon in hand!
 
@@ -75,3 +84,11 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ```
+
+## Check out YourKit!
+
+[![YourKit](https://www.yourkit.com/images/yklogo.png)](https://www.yourkit.com/java/profiler/index.jsp)
+
+YourKit supports open source projects with its full-featured Java Profiler.  
+We use YourKit Java Profiler to great extent to ensure the performance characteristics of Charlatano.  
+We highly recommend you check it out, and trial it for yourself! Just click the logo above.

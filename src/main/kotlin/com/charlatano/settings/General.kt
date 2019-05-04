@@ -19,6 +19,17 @@
 package com.charlatano.settings
 
 /**
+ * Set this to true if you're playing on a league like ESEA, FaceIT, etc.
+ * This will disable writing to the game and disable all visuals.
+ */
+var LEAGUE_MODE = false
+
+/**
+ * This will be set by constructEntities hook
+ */
+var DANGER_ZONE = false
+
+/**
  * Set this to true if you're playing CS:CO (Counter-Strike: Classic Offensive).
  */
 var CLASSIC_OFFENSIVE = false

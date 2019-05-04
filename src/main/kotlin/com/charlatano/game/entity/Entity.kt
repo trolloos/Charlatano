@@ -23,14 +23,17 @@ import com.charlatano.game.me
 import com.charlatano.game.netvars.NetVarOffsets.bSpottedByMask
 import com.charlatano.game.netvars.NetVarOffsets.dwModel
 import com.charlatano.game.netvars.NetVarOffsets.iTeamNum
+import com.charlatano.game.netvars.NetVarOffsets.nSurvivalTeam
 import com.charlatano.game.netvars.NetVarOffsets.vecOrigin
 import com.charlatano.game.netvars.NetVarOffsets.vecViewOffset
 import com.charlatano.game.offsets.ClientOffsets.bDormant
 import com.charlatano.game.offsets.ClientOffsets.dwIndex
+import com.charlatano.game.offsets.ClientOffsets.pStudioHdr
 import com.charlatano.utils.Angle
-import com.charlatano.utils.Vector
 import com.charlatano.utils.extensions.uint
-import org.jire.arrowhead.get
+import com.charlatano.utils.readCached
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 
 typealias Entity = Long
 
@@ -42,17 +45,23 @@ internal fun Entity.spotted(): Boolean {
 }
 
 internal fun Entity.dormant(): Boolean = try {
-	csgoEXE[this + bDormant]
+	csgoEXE.boolean(this + bDormant)
 } catch (t: Throwable) {
 	false
 }
 
-internal fun Entity.team(): Int = csgoEXE[this + iTeamNum]
+internal fun Entity.team() = csgoEXE.uint(this + iTeamNum)
+
+internal fun Entity.survivalTeam() = csgoEXE.uint(this + nSurvivalTeam)
 
 internal fun Entity.model(): Long = csgoEXE.uint(this + dwModel)
 
-internal fun Entity.position(): Angle = Vector(
-		csgoEXE.float(this + vecOrigin).toDouble(),
-		csgoEXE.float(this + vecOrigin + 4).toDouble(),
-		csgoEXE.float(this + vecOrigin + 8).toDouble()
-				+ csgoEXE.float(this + vecViewOffset + 8))
+internal fun Entity.studioHdr(): Long = csgoEXE.uint(this + pStudioHdr)
+
+private val entity2Angle: Long2ObjectMap<Angle> = Long2ObjectOpenHashMap(255)
+
+internal fun Entity.position(): Angle = readCached(entity2Angle) {
+	x = csgoEXE.float(it + vecOrigin).toDouble()
+	y = csgoEXE.float(it + vecOrigin + 4).toDouble()
+	z = csgoEXE.float(it + vecOrigin + 8).toDouble() + csgoEXE.float(it + vecViewOffset + 8)
+}

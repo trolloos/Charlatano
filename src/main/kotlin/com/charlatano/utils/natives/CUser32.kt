@@ -19,6 +19,7 @@
 package com.charlatano.utils.natives
 
 import com.sun.jna.Native
+import com.sun.jna.Pointer
 import com.sun.jna.platform.win32.WinDef
 
 object CUser32 {
@@ -31,13 +32,13 @@ object CUser32 {
 	external fun GetClientRect(hWnd: WinDef.HWND, rect: WinDef.RECT): Boolean
 	
 	@JvmStatic
-	external fun GetCursorPos(p: WinDef.POINT): Boolean
+	external fun GetCursorPos(p: WinDef.POINT): Int
 	
 	@JvmStatic
 	external fun FindWindowA(lpClassName: String?, lpWindowName: String): WinDef.HWND
 	
 	@JvmStatic
-	external fun GetForegroundWindow(): WinDef.HWND
+	external fun GetForegroundWindow(): Long
 	
 	@JvmStatic
 	external fun GetWindowRect(hWnd: WinDef.HWND, rect: WinDef.RECT): Boolean

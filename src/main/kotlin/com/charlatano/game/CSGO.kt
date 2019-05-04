@@ -20,21 +20,17 @@ package com.charlatano.game
 
 import com.charlatano.game.hooks.constructEntities
 import com.charlatano.game.netvars.NetVars
-import com.charlatano.game.offsets.ClientOffsets.dwLocalPlayer
-import com.charlatano.game.offsets.EngineOffsets.dwClientState
-import com.charlatano.game.offsets.EngineOffsets.dwInGame
 import com.charlatano.overlay.CharlatanoOverlay
 import com.charlatano.overlay.CharlatanoOverlay.camera
 import com.charlatano.overlay.Overlay
-import com.charlatano.settings.CLASSIC_OFFENSIVE
+import com.charlatano.settings.*
 import com.charlatano.utils.every
-import com.charlatano.utils.extensions.uint
+import com.charlatano.utils.inBackground
 import com.charlatano.utils.natives.CUser32
-import com.charlatano.utils.paused
 import com.charlatano.utils.retry
+import com.sun.jna.Pointer
 import com.sun.jna.platform.win32.User32
 import com.sun.jna.platform.win32.WinDef
-import com.sun.jna.platform.win32.WinNT
 import org.jire.arrowhead.Module
 import org.jire.arrowhead.Process
 import org.jire.arrowhead.processByName
@@ -51,8 +47,6 @@ object CSGO {
 		private set
 	lateinit var engineDLL: Module
 		private set
-	lateinit var scaleFormDLL: Module
-		private set
 	
 	var gameHeight: Int = 0
 		private set
@@ -67,14 +61,14 @@ object CSGO {
 		private set
 	
 	fun initialize() {
-		retry(128) { csgoEXE = processByName("csgo.exe", WinNT.PROCESS_QUERY_INFORMATION
-				or WinNT.PROCESS_VM_READ or WinNT.PROCESS_VM_WRITE)!! }
+		retry(128) {
+			csgoEXE = processByName(PROCESS_NAME, PROCESS_ACCESS_FLAGS)!!
+		}
 		
 		retry(128) {
 			csgoEXE.loadModules()
-			clientDLL = csgoEXE.modules["client.dll"]!!
-			engineDLL = csgoEXE.modules["engine.dll"]!!
-			scaleFormDLL = csgoEXE.modules["scaleformui.dll"]!!
+			clientDLL = csgoEXE.modules[CLIENT_MODULE_NAME]!!
+			engineDLL = csgoEXE.modules[ENGINE_MODULE_NAME]!!
 		}
 		
 		val rect = WinDef.RECT()
@@ -95,10 +89,10 @@ object CSGO {
 			gameX = rect.left + (((rect.right - rect.left) - gameWidth) / 2)
 			gameY = rect.top + ((rect.bottom - rect.top) - gameHeight)
 			
-			if ((lastX != gameX || lastY != gameY) && Overlay.hwnd != null)
+			if (Overlay.opened && (lastX != gameX || lastY != gameY))
 				User32.INSTANCE.MoveWindow(Overlay.hwnd, gameX, gameY, gameWidth, gameHeight, false)
 			
-			if (CharlatanoOverlay.created && (lastWidth != gameWidth || lastHeight != gameHeight))
+			if (Overlay.opened && CharlatanoOverlay.created && (lastWidth != gameWidth || lastHeight != gameHeight))
 				camera.setToOrtho(true, gameWidth.toFloat(), gameHeight.toFloat())
 			
 			lastWidth = gameWidth
@@ -106,26 +100,13 @@ object CSGO {
 			lastX = gameX
 			lastY = gameY
 		}
-		
+
 		every(1024, continuous = true) {
-			paused = CUser32.GetForegroundWindow() != hwd
-			if (paused) return@every
+			inBackground = Pointer.nativeValue(hwd.pointer) != CUser32.GetForegroundWindow()
 		}
 		
-		NetVars.load()
-		
-		retry(16) {
-			var myAddress = clientDLL.uint(dwLocalPlayer)
-			if (myAddress <= 0) {
-				dwLocalPlayer = dwLocalPlayer + 0x1C // can't do dwLocalPlayer += 0x1C because of compiler bug...
-				myAddress = clientDLL.uint(dwLocalPlayer)
-			}
-			
-			val enginePointer = engineDLL.uint(dwClientState)
-			val inGame = csgoEXE.int(enginePointer + dwInGame) == 6
-			paused = !inGame || myAddress <= 0
-		}
-		
+		NetVars.load() 
+
 		constructEntities()
 	}
 	
