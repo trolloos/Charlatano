@@ -75,9 +75,13 @@ jar {
 }
 
 shadowJar {
-	baseName = 'Charlatano'
+	baseName = 'bb'
 	classifier = null
+	minimize {
+	exclude(dependency('org.jetbrains.kotlin:.*:.*'))
+  }
 }
+
 
 task charlatano {
 	doLast {
